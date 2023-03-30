@@ -36,6 +36,7 @@ func main() {
 	r.GET("/ping", func(ctx *gin.Context) {
 		ctx.String(200, "pong")
 	})
+	// wechat endpoints
 	wx := r.Group("/api/wx")
 	{
 		wx.POST("/login", func(ctx *gin.Context) {
