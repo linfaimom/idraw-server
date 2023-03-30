@@ -10,11 +10,24 @@ import (
 const addr = ":8388"
 
 func main() {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		SkipPaths: []string{"/ping"},
+	}))
 	// health check endpoint
 	r.GET("/ping", func(ctx *gin.Context) {
 		ctx.String(200, "pong")
 	})
+	wx := r.Group("/api/wx")
+	{
+		wx.POST("/login", func(ctx *gin.Context) {
+
+		})
+		wx.POST("/logout", func(ctx *gin.Context) {
+
+		})
+	}
 	// biz service endpoints
 	app := r.Group("/api/images")
 	{
