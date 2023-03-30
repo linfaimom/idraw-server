@@ -30,7 +30,7 @@ func main() {
 	r.Use(gin.Recovery())
 	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
 		Formatter: customLogFormatter,
-		// SkipPaths: []string{"/ping"},
+		SkipPaths: []string{"/ping"},
 	}))
 	// health check endpoint
 	r.GET("/ping", func(ctx *gin.Context) {
