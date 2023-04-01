@@ -30,14 +30,22 @@ func getOpenAiApiKey() string {
 func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	log.Println("the user who submiited this request is ", req.User)
 	body, _ := json.Marshal(req)
-	r, err := http.Post(OpenAiApiUrl+"/generations", "application/json", bytes.NewBuffer(body))
+	r, err := http.NewRequest("POST", OpenAiApiUrl+"/generations", bytes.NewBuffer(body))
+	if err != nil {
+		log.Println("build http request failed", err)
+		return nil, err
+	}
+	r.Header.Add("Content-Type", "application/json")
+	r.Header.Add("Authorization", "Bearer "+getOpenAiApiKey())
+	client := &http.Client{}
+	resp, err := client.Do(r)
 	if err != nil {
 		log.Println("do http request failed", err)
 		return nil, err
 	}
-	if r.StatusCode != 200 {
-		log.Printf("do http request failed, status: %s", r.Status)
-		return nil, errors.New(r.Status)
+	if resp.StatusCode != 200 {
+		log.Printf("do http request failed, status: %s", resp.Status)
+		return nil, errors.New(resp.Status)
 	}
 	defer r.Body.Close()
 	result := &GenerationResp{}
