@@ -47,9 +47,9 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 		log.Printf("do http request failed, status: %s", resp.Status)
 		return nil, errors.New(resp.Status)
 	}
-	defer r.Body.Close()
+	defer resp.Body.Close()
 	result := &GenerationResp{}
-	err = json.NewDecoder(r.Body).Decode(result)
+	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
 		log.Println("do response json decode failed", err)
 		return nil, err
