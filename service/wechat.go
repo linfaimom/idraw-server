@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,7 +16,7 @@ type WeChatLoginResp struct {
 	OpenId     string `json:"openid"`
 	UnionId    string `json:"unionid"`
 	ErrCode    string `json:"errcode"`
-	ErrMsg     string `json:"errmsg"`
+	ErrMsg     int32  `json:"errmsg"`
 }
 
 func getWeAppId() string {
@@ -32,13 +33,18 @@ func WeChatLogin(code string) (*WeChatLoginResp, error) {
 	params.Add("secret", getWeAppSecret())
 	params.Add("js_code", code)
 	params.Add("grant_type", "authorization_code")
-	reqUrl := WeChatApiUrl + "/sns/jscode2session" + params.Encode()
+	reqUrl := WeChatApiUrl + "/sns/jscode2session?" + params.Encode()
 	r, err := http.Get(reqUrl)
 	result := &WeChatLoginResp{}
 	if err != nil {
 		log.Println("build http request failed", err)
 		return result, err
 	}
+	if r.StatusCode != 200 {
+		log.Printf("do http request failed, status: %s", r.Status)
+		return result, errors.New(r.Status)
+	}
+	defer r.Body.Close()
 	err = json.NewDecoder(r.Body).Decode(result)
 	if err != nil {
 		log.Println("do response json decode failed", err)

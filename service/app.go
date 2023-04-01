@@ -29,26 +29,18 @@ func getOpenAiApiKey() string {
 // GenerateImagesByPrompt 根据场景描述产出符合场景的图片
 func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	body, _ := json.Marshal(req)
-	r, err := http.NewRequest("POST", OpenAiApiUrl+"/generations", bytes.NewBuffer(body))
-	if err != nil {
-		log.Println("build http request failed", err)
-		return nil, err
-	}
-	r.Header.Add("Content-Type", "application/json")
-	r.Header.Add("Authorization", "Bearer "+getOpenAiApiKey())
-	client := &http.Client{}
-	resp, err := client.Do(r)
+	r, err := http.Post(OpenAiApiUrl+"/generations", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		log.Println("do http request failed", err)
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
-		log.Printf("do http request failed, status: %s", resp.Status)
-		return nil, errors.New(resp.Status)
+	if r.StatusCode != 200 {
+		log.Printf("do http request failed, status: %s", r.Status)
+		return nil, errors.New(r.Status)
 	}
-	defer resp.Body.Close()
+	defer r.Body.Close()
 	result := &GenerationResp{}
-	err = json.NewDecoder(resp.Body).Decode(result)
+	err = json.NewDecoder(r.Body).Decode(result)
 	if err != nil {
 		log.Println("do response json decode failed", err)
 		return nil, err
