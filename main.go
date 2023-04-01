@@ -39,12 +39,7 @@ func main() {
 	// wechat endpoints
 	wx := r.Group("/api/wx")
 	{
-		wx.POST("/login", func(ctx *gin.Context) {
-
-		})
-		wx.POST("/logout", func(ctx *gin.Context) {
-
-		})
+		wx.GET("/login", endpoint.WeLogin)
 	}
 	// biz service endpoints
 	app := r.Group("/api/images")

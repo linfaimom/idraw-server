@@ -1,11 +1,12 @@
 package endpoint
 
 import (
-	"github.com/gin-gonic/gin"
 	"idraw-server/api/request"
 	"idraw-server/api/response"
 	"idraw-server/service"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func GenerateImagesByPrompt(c *gin.Context) {

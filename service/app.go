@@ -21,8 +21,6 @@ type GenerationData struct {
 
 const OpenAiApiUrl = "https://chat-gpt-proxy.danchaofan.xyz/v1/images"
 
-var client = &http.Client{}
-
 // 从 env 中获取，key 属于敏感信息，将会在运行中注入
 func getOpenAiApiKey() string {
 	return os.Getenv("OPENAI_API_KEY")
@@ -38,6 +36,7 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	}
 	r.Header.Add("Content-Type", "application/json")
 	r.Header.Add("Authorization", "Bearer "+getOpenAiApiKey())
+	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
 		log.Println("do http request failed", err)
@@ -58,5 +57,5 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	for i, data := range result.Data {
 		urls[i] = data.Url
 	}
-	return urls, err
+	return urls, nil
 }
