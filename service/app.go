@@ -28,6 +28,7 @@ func getOpenAiApiKey() string {
 
 // GenerateImagesByPrompt 根据场景描述产出符合场景的图片
 func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
+	log.Println("the user who submiited this request is ", req.User)
 	body, _ := json.Marshal(req)
 	r, err := http.Post(OpenAiApiUrl+"/generations", "application/json", bytes.NewBuffer(body))
 	if err != nil {
