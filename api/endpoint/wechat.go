@@ -13,7 +13,7 @@ func WeLogin(c *gin.Context) {
 	if code := c.Query("code"); code != "" {
 		data, err := service.WeChatLogin(code)
 		if err != nil {
-			response.Fail(c, http.StatusInternalServerError, err)
+			response.Fail(c, http.StatusServiceUnavailable, err)
 		}
 		response.Success(c, *data)
 	} else {
