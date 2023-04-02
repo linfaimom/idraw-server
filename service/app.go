@@ -37,12 +37,16 @@ func GetDailyLimits() int {
 
 func GetCurrentUsages(user string) int {
 	usages := userUsagesMap[user]
-	log.Println("current usages: ", usages)
+	log.Printf("current user %s, current usages: %d\n", user, usages)
 	return usages
 }
 
 // GenerateImagesByPrompt 根据场景描述产出符合场景的图片
 func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
+	usages := GetCurrentUsages(req.User)
+	if usages >= GetDailyLimits() {
+		return nil, errors.New("current user has exceeded daily limits")
+	}
 	body, _ := json.Marshal(req)
 	r, err := http.NewRequest("POST", openAiApiUrl+"/generations", bytes.NewBuffer(body))
 	if err != nil {
@@ -72,7 +76,6 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	for i, data := range result.Data {
 		urls[i] = data.Url
 	}
-	usages := userUsagesMap[req.User]
 	userUsagesMap[req.User] = usages + 1
 	return urls, nil
 }
