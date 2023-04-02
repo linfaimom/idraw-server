@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 type GenerationResp struct {
@@ -19,10 +20,7 @@ type GenerationData struct {
 	Url string `json:"url"`
 }
 
-const (
-	openAiApiUrl string = "https://chat-gpt-proxy.danchaofan.xyz/v1/images"
-	dailyLimits  int    = 10
-)
+const openAiApiUrl string = "https://chat-gpt-proxy.danchaofan.xyz/v1/images"
 
 var userUsagesMap = make(map[string]int)
 
@@ -32,6 +30,8 @@ func getOpenAiApiKey() string {
 }
 
 func GetDailyLimits() int {
+	stringValue := os.Getenv("DAILY_LIMITS")
+	dailyLimits, _ := strconv.Atoi(stringValue)
 	return dailyLimits
 }
 
