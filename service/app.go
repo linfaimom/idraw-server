@@ -19,18 +19,32 @@ type GenerationData struct {
 	Url string `json:"url"`
 }
 
-const OpenAiApiUrl = "https://chat-gpt-proxy.danchaofan.xyz/v1/images"
+const (
+	openAiApiUrl string = "https://chat-gpt-proxy.danchaofan.xyz/v1/images"
+	dailyLimits  int    = 10
+)
+
+var userUsagesMap = make(map[string]int)
 
 // 从 env 中获取，key 属于敏感信息，将会在运行中注入
 func getOpenAiApiKey() string {
 	return os.Getenv("OPENAI_API_KEY")
 }
 
+func GetDailyLimits() int {
+	return dailyLimits
+}
+
+func GetCurrentUsages(user string) int {
+	usages := userUsagesMap[user]
+	log.Println("current usages: ", usages)
+	return usages
+}
+
 // GenerateImagesByPrompt 根据场景描述产出符合场景的图片
 func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
-	log.Println("the user who submiited this request is ", req.User)
 	body, _ := json.Marshal(req)
-	r, err := http.NewRequest("POST", OpenAiApiUrl+"/generations", bytes.NewBuffer(body))
+	r, err := http.NewRequest("POST", openAiApiUrl+"/generations", bytes.NewBuffer(body))
 	if err != nil {
 		log.Println("build http request failed", err)
 		return nil, err
@@ -58,5 +72,7 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	for i, data := range result.Data {
 		urls[i] = data.Url
 	}
+	usages := userUsagesMap[req.User]
+	userUsagesMap[req.User] = usages + 1
 	return urls, nil
 }
