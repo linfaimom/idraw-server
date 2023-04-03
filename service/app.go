@@ -101,7 +101,7 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 // GenerateImageVariationsByImage 根据图片产出相应变体图片
 func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, error) {
 	usages := GetCurrentUsages(req.User)
-	if usages >= 10 {
+	if usages >= GetDailyLimits() {
 		return nil, errors.New("current user has exceeded daily limits")
 	}
 	image, _ := req.File.Open()
@@ -119,7 +119,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 		return nil, err
 	}
 	r.Header.Add("Content-Type", mp.FormDataContentType())
-	r.Header.Add("Authorization", "Bearer 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")
+	r.Header.Add("Authorization", "Bearer"+getOpenAiApiKey())
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
