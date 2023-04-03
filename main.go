@@ -51,9 +51,7 @@ func main() {
 		// 根据场景描述产出符合场景的图片
 		app.POST("/generations", endpoint.GenerateImagesByPrompt)
 		// 根据图片产出其变体
-		app.POST("/variations", endpoint.GenerateImageVariantsByImage)
-		// 根据图片&场景描述产出融入了所需场景的新图片
-		app.POST("/edits", endpoint.GenerateImagesByImageAndPrompt)
+		app.POST("/variations", endpoint.GenerateImageVariationsByImage)
 	}
 	if err := r.Run(addr); err != nil {
 		log.Println("server start up failed")

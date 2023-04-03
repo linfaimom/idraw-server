@@ -6,6 +6,7 @@ import (
 	"errors"
 	"idraw-server/api/request"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
@@ -69,6 +70,48 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 		return nil, err
 	}
 	r.Header.Add("Content-Type", "application/json")
+	r.Header.Add("Authorization", "Bearer "+getOpenAiApiKey())
+	client := &http.Client{}
+	resp, err := client.Do(r)
+	if err != nil {
+		log.Println("do http request failed", err)
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		log.Printf("do http request failed, status: %s", resp.Status)
+		return nil, errors.New(resp.Status)
+	}
+	defer resp.Body.Close()
+	result := &GenerationResp{}
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		log.Println("do response json decode failed", err)
+		return nil, err
+	}
+	urls := make([]string, len(result.Data))
+	for i, data := range result.Data {
+		urls[i] = data.Url
+	}
+	userUsagesMap[req.User] = usages + 1
+	return urls, nil
+}
+
+// GenerateImageVariationsByImage 根据图片产出相应变体图片
+func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, error) {
+	usages := GetCurrentUsages(req.User)
+	if usages >= 10 {
+		return nil, errors.New("current user has exceeded daily limits")
+	}
+	// TODO multipart to do
+	buf := new(bytes.Buffer)
+	mp := multipart.NewWriter(buf)
+	defer mp.Close()
+	r, err := http.NewRequest("POST", openAiApiUrl+"/variations", buf)
+	if err != nil {
+		log.Println("build http request failed", err)
+		return nil, err
+	}
+	r.Header.Add("Content-Type", mp.FormDataContentType())
 	r.Header.Add("Authorization", "Bearer "+getOpenAiApiKey())
 	client := &http.Client{}
 	resp, err := client.Do(r)
