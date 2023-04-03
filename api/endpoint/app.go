@@ -38,10 +38,16 @@ func GenerateImagesByPrompt(c *gin.Context) {
 	response.Success(c, result)
 }
 
-func GenerateImageVariantsByImage(c *gin.Context) {
-
-}
-
-func GenerateImagesByImageAndPrompt(c *gin.Context) {
-
+func GenerateImageVariationsByImage(c *gin.Context) {
+	req := request.ImageVariationReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	result, err := service.GenerateImageVariationsByImage(req)
+	if err != nil {
+		response.Fail(c, http.StatusServiceUnavailable, err)
+		return
+	}
+	response.Success(c, result)
 }
