@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/robfig/cron/v3"
 )
 
 type GenerationResp struct {
@@ -23,6 +25,19 @@ type GenerationData struct {
 const openAiApiUrl string = "https://chat-gpt-proxy.danchaofan.xyz/v1/images"
 
 var userUsagesMap = make(map[string]int)
+
+func init() {
+	log.Println("fire a cron worker to clean the map")
+	c := cron.New()
+	c.AddFunc("@daily", func() {
+		log.Println("start to clean the map")
+		for k := range userUsagesMap {
+			delete(userUsagesMap, k)
+		}
+		log.Println("finished cleaning the map")
+	})
+	c.Start()
+}
 
 // 从 env 中获取，key 属于敏感信息，将会在运行中注入
 func getOpenAiApiKey() string {
