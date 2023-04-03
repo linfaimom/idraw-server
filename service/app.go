@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"idraw-server/api/request"
+	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -74,11 +75,12 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
-		log.Println("do http request failed", err)
+		log.Println("do http request failed, err: ", err)
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		log.Printf("do http request failed, status: %s", resp.Status)
+		b, _ := io.ReadAll(resp.Body)
+		log.Printf("do http request failed, status: %s, body: %s\n", resp.Status, string(b))
 		return nil, errors.New(resp.Status)
 	}
 	defer resp.Body.Close()
@@ -102,25 +104,31 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	if usages >= 10 {
 		return nil, errors.New("current user has exceeded daily limits")
 	}
-	// TODO multipart to do
+	image, _ := req.File.Open()
 	buf := new(bytes.Buffer)
 	mp := multipart.NewWriter(buf)
-	defer mp.Close()
+	filePart, _ := mp.CreateFormFile("image", req.File.Filename)
+	io.Copy(filePart, image)
+	mp.WriteField("user", req.User)
+	mp.WriteField("size", req.Size)
+	mp.WriteField("n", strconv.Itoa(req.N))
+	mp.Close()
 	r, err := http.NewRequest("POST", openAiApiUrl+"/variations", buf)
 	if err != nil {
 		log.Println("build http request failed", err)
 		return nil, err
 	}
 	r.Header.Add("Content-Type", mp.FormDataContentType())
-	r.Header.Add("Authorization", "Bearer "+getOpenAiApiKey())
+	r.Header.Add("Authorization", "Bearer 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")
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
-		log.Println("do http request failed", err)
+		log.Println("do http request failed, err: ", err)
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		log.Printf("do http request failed, status: %s", resp.Status)
+		b, _ := io.ReadAll(resp.Body)
+		log.Printf("do http request failed, status: %s, body: %s\n", resp.Status, string(b))
 		return nil, errors.New(resp.Status)
 	}
 	defer resp.Body.Close()
