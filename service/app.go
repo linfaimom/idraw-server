@@ -15,12 +15,12 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type GenerationResp struct {
+type generationResp struct {
 	Created int64            `json:"created"`
-	Data    []GenerationData `json:"data"`
+	Data    []generationData `json:"data"`
 }
 
-type GenerationData struct {
+type generationData struct {
 	Url string `json:"url"`
 }
 
@@ -84,7 +84,7 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 		return nil, errors.New(resp.Status)
 	}
 	defer resp.Body.Close()
-	result := &GenerationResp{}
+	result := &generationResp{}
 	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
 		log.Println("do response json decode failed", err)
@@ -132,7 +132,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 		return nil, errors.New(resp.Status)
 	}
 	defer resp.Body.Close()
-	result := &GenerationResp{}
+	result := &generationResp{}
 	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
 		log.Println("do response json decode failed", err)

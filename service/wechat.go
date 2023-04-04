@@ -9,15 +9,15 @@ import (
 	"os"
 )
 
-const WeChatApiUrl = "https://api.weixin.qq.com"
-
-type WeChatLoginResp struct {
+type weChatLoginResp struct {
 	SessionKey string `json:"session_key"`
 	OpenId     string `json:"openid"`
 	UnionId    string `json:"unionid"`
 	ErrCode    string `json:"errcode"`
 	ErrMsg     int32  `json:"errmsg"`
 }
+
+const weChatApiUrl = "https://api.weixin.qq.com"
 
 func getWeAppId() string {
 	return os.Getenv("WE_APP_ID")
@@ -27,15 +27,15 @@ func getWeAppSecret() string {
 	return os.Getenv("WE_APP_SECRET")
 }
 
-func WeChatLogin(code string) (*WeChatLoginResp, error) {
+func WeChatLogin(code string) (*weChatLoginResp, error) {
 	params := url.Values{}
 	params.Add("appid", getWeAppId())
 	params.Add("secret", getWeAppSecret())
 	params.Add("js_code", code)
 	params.Add("grant_type", "authorization_code")
-	reqUrl := WeChatApiUrl + "/sns/jscode2session?" + params.Encode()
+	reqUrl := weChatApiUrl + "/sns/jscode2session?" + params.Encode()
 	r, err := http.Get(reqUrl)
-	result := &WeChatLoginResp{}
+	result := &weChatLoginResp{}
 	if err != nil {
 		log.Println("build http request failed", err)
 		return result, err
