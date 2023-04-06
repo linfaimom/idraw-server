@@ -2,6 +2,11 @@ package request
 
 import "mime/multipart"
 
+type FileUploadReq struct {
+	File *multipart.FileHeader `form:"file" binding:"required"`
+	User string                `form:"user" binding:"required"`
+}
+
 type ImageGenerationReq struct {
 	User   string `json:"user" binding:"required"`
 	Prompt string `json:"prompt" binding:"required"`

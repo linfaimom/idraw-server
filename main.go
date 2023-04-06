@@ -48,6 +48,8 @@ func main() {
 		app.GET("/dailyLimits", endpoint.GetDailyLimits)
 		// 当前使用值
 		app.GET("/currentUsages", endpoint.GetCurrentUsages)
+		// 图片上传
+		app.POST("", endpoint.UploadFile)
 		// 根据场景描述产出符合场景的图片
 		app.POST("/generations", endpoint.GenerateImagesByPrompt)
 		// 根据图片产出其变体

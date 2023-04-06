@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/robfig/cron/v3"
@@ -56,6 +57,33 @@ func GetCurrentUsages(user string) int {
 	usages := userUsagesMap[user]
 	log.Printf("current user %s, current usages: %d\n", user, usages)
 	return usages
+}
+
+// UploadFile 接收文件上传，并保存至临时目录
+func UploadFile(req request.FileUploadReq) (string, error) {
+	file := req.File
+	src, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+	homeDir, _ := os.UserHomeDir()
+	// for security reasons, we just expose the relative path not the full path to the outside world
+	relativeDst := "/idraw-files/" + req.User + "-" + file.Filename
+	if err = os.MkdirAll(filepath.Dir(homeDir+relativeDst), 0750); err != nil {
+		return "", err
+	}
+	out, err := os.Create(homeDir + relativeDst)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, src)
+	if err != nil {
+		return "", nil
+	}
+	log.Println("saved file in ", homeDir+relativeDst)
+	return relativeDst, nil
 }
 
 // GenerateImagesByPrompt 根据场景描述产出符合场景的图片

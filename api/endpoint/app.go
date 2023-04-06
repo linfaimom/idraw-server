@@ -24,6 +24,20 @@ func GetCurrentUsages(c *gin.Context) {
 	}
 }
 
+func UploadFile(c *gin.Context) {
+	req := request.FileUploadReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		response.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	result, err := service.UploadFile(req)
+	if err != nil {
+		response.Fail(c, http.StatusServiceUnavailable, err)
+		return
+	}
+	response.Success(c, result)
+}
+
 func GenerateImagesByPrompt(c *gin.Context) {
 	req := request.ImageGenerationReq{}
 	if err := c.ShouldBindJSON(&req); err != nil {
