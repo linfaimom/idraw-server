@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/sunshineplan/imgconv"
+
 	"github.com/robfig/cron/v3"
 )
 
@@ -134,14 +136,14 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	}
 	homeDir, _ := os.UserHomeDir()
 	fileDst := homeDir + req.FilePath
-	file, err := os.Open(fileDst)
+	file, err := imgconv.Open(fileDst)
 	if err != nil {
 		return nil, err
 	}
 	buf := new(bytes.Buffer)
 	mp := multipart.NewWriter(buf)
-	filePart, _ := mp.CreateFormFile("image", file.Name())
-	io.Copy(filePart, file)
+	filePart, _ := mp.CreateFormFile("image", "image.png")
+	imgconv.Write(filePart, file, &imgconv.FormatOption{Format: imgconv.PNG})
 	mp.WriteField("user", req.User)
 	mp.WriteField("size", req.Size)
 	mp.WriteField("n", strconv.Itoa(req.N))
