@@ -132,11 +132,16 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	if usages >= GetDailyLimits() {
 		return nil, errors.New("current user has exceeded daily limits")
 	}
-	image, _ := req.File.Open()
+	homeDir, _ := os.UserHomeDir()
+	fileDst := homeDir + req.FilePath
+	file, err := os.Open(fileDst)
+	if err != nil {
+		return nil, err
+	}
 	buf := new(bytes.Buffer)
 	mp := multipart.NewWriter(buf)
-	filePart, _ := mp.CreateFormFile("image", req.File.Filename)
-	io.Copy(filePart, image)
+	filePart, _ := mp.CreateFormFile("image", file.Name())
+	io.Copy(filePart, file)
 	mp.WriteField("user", req.User)
 	mp.WriteField("size", req.Size)
 	mp.WriteField("n", strconv.Itoa(req.N))
@@ -147,7 +152,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 		return nil, err
 	}
 	r.Header.Add("Content-Type", mp.FormDataContentType())
-	r.Header.Add("Authorization", "Bearer"+getOpenAiApiKey())
+	r.Header.Add("Authorization", "Bearer "+getOpenAiApiKey())
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {

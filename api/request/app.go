@@ -15,8 +15,8 @@ type ImageGenerationReq struct {
 }
 
 type ImageVariationReq struct {
-	File *multipart.FileHeader `form:"file" binding:"required"`
-	User string                `form:"user" binding:"required"`
-	N    int                   `form:"n" binding:"gte=1,lte=10"`
-	Size string                `form:"size" binding:"required"`
+	FilePath string `form:"filePath" binding:"required"`
+	User     string `form:"user" binding:"required"`
+	N        int    `form:"n" binding:"gte=1,lte=10"`
+	Size     string `form:"size" binding:"required"`
 }
