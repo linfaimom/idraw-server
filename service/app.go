@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"idraw-server/api/request"
 	"io"
 	"log"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/sunshineplan/imgconv"
 
@@ -133,8 +135,15 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	}
 	urls := make([]string, len(result.Data))
 	for i, data := range result.Data {
-		urls[i] = data.Url
+		// download from the url and save as a file
+		fileUrl, err := saveFile(req.User, data.Url)
+		if err != nil {
+			log.Println("save file error")
+			return []string{}, err
+		}
+		urls[i] = fileUrl
 	}
+	// count usages
 	userUsagesMap[req.User] = usages + 1
 	return urls, nil
 }
@@ -158,7 +167,6 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	mp.WriteField("user", req.User)
 	mp.WriteField("size", req.Size)
 	mp.WriteField("n", strconv.Itoa(req.N))
-	mp.WriteField("response_format", req.ResponseFormat)
 	mp.Close()
 	r, err := http.NewRequest("POST", openAiApiUrl+"/variations", buf)
 	if err != nil {
@@ -187,8 +195,44 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	}
 	urls := make([]string, len(result.Data))
 	for i, data := range result.Data {
-		urls[i] = data.Url
+		// download from the url and save as a file
+		fileUrl, err := saveFile(req.User, data.Url)
+		if err != nil {
+			log.Println("save file error")
+			return []string{}, err
+		}
+		urls[i] = fileUrl
 	}
 	userUsagesMap[req.User] = usages + 1
 	return urls, nil
+}
+
+func saveFile(user string, url string) (string, error) {
+	fileName := fmt.Sprintf("%s-%d.png", user, time.Now().UnixNano()/int64(time.Millisecond))
+	homeDir, _ := os.UserHomeDir()
+	fileAbsPath := homeDir + generatedPath + fileName
+	if err := os.MkdirAll(filepath.Dir(fileAbsPath), 0750); err != nil {
+		return "", err
+	}
+	out, err := os.Create(fileAbsPath)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+	// download the content
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Println("do download file request failed, err: ", err)
+		return "", err
+	}
+	if resp.StatusCode != 200 {
+		b, _ := io.ReadAll(resp.Body)
+		log.Printf("do download file request failed, status: %s, body: %s\n", resp.Status, string(b))
+		return "", errors.New(resp.Status)
+	}
+	defer resp.Body.Close()
+	// copy to the file
+	size, _ := io.Copy(out, resp.Body)
+	log.Printf("save file %s completed, the size is: %d bytes", fileName, size)
+	return fileName, nil
 }
