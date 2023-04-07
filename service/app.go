@@ -27,7 +27,7 @@ type generationData struct {
 	Url string `json:"url"`
 }
 
-const openAiApiUrl string = "https://chat-gpt-proxy.danchaofan.xyz/v1/images"
+const openAiApiUrl string = "https://xray-jp.freedomlalaland.xyz:8443/v1/images"
 
 var userUsagesMap = make(map[string]int)
 
