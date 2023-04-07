@@ -5,6 +5,7 @@ import (
 	"idraw-server/api/request"
 	"idraw-server/api/response"
 	"idraw-server/service"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,28 @@ func GetCurrentUsages(c *gin.Context) {
 		data := service.GetCurrentUsages(openId)
 		response.Success(c, data)
 	} else {
-		response.Fail(c, http.StatusBadRequest, errors.New("failed to fetch current usages"))
+		response.Fail(c, http.StatusBadRequest, errors.New("error params"))
+		return
+	}
+}
+
+func ServeFile(c *gin.Context) {
+	if fileName := c.Query("fileName"); fileName != "" {
+		file, err := service.ServeFile(fileName)
+		if err != nil {
+			response.Fail(c, http.StatusServiceUnavailable, errors.New("failed to fetch current file"))
+			return
+		}
+		defer file.Close()
+		c.Writer.Header().Add("Content-Type", "image/png")
+		_, err = io.Copy(c.Writer, file)
+		if err != nil {
+			response.Fail(c, http.StatusServiceUnavailable, errors.New("failed to fetch current file"))
+			return
+		}
+		response.Success(c, nil)
+	} else {
+		response.Fail(c, http.StatusServiceUnavailable, errors.New("error params"))
 		return
 	}
 }

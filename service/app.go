@@ -27,7 +27,11 @@ type generationData struct {
 	Url string `json:"url"`
 }
 
-const openAiApiUrl string = "https://xray-jp.freedomlalaland.xyz:8443/v1/images"
+const (
+	openAiApiUrl  string = "https://xray-jp.freedomlalaland.xyz:8443/v1/images"
+	uploadedPath  string = "/idraw-uploaded-dir/"
+	generatedPath string = "/idraw-generated-dir/"
+)
 
 var userUsagesMap = make(map[string]int)
 
@@ -61,6 +65,13 @@ func GetCurrentUsages(user string) int {
 	return usages
 }
 
+// ServeFile 提供文件下载功能
+func ServeFile(fileName string) (*os.File, error) {
+	homeDir, _ := os.UserHomeDir()
+	filePath := homeDir + generatedPath + fileName
+	return os.Open(filePath)
+}
+
 // UploadFile 接收文件上传，并保存至临时目录
 func UploadFile(req request.FileUploadReq) (string, error) {
 	file := req.File
@@ -71,7 +82,7 @@ func UploadFile(req request.FileUploadReq) (string, error) {
 	defer src.Close()
 	homeDir, _ := os.UserHomeDir()
 	// for security reasons, we just expose the relative path not the full path to the outside world
-	relativeDst := "/idraw-files/" + req.User + "-" + file.Filename
+	relativeDst := uploadedPath + req.User + "-" + file.Filename
 	if err = os.MkdirAll(filepath.Dir(homeDir+relativeDst), 0750); err != nil {
 		return "", err
 	}
