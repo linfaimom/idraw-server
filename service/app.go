@@ -147,6 +147,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	mp.WriteField("user", req.User)
 	mp.WriteField("size", req.Size)
 	mp.WriteField("n", strconv.Itoa(req.N))
+	mp.WriteField("response_format", req.ResponseFormat)
 	mp.Close()
 	r, err := http.NewRequest("POST", openAiApiUrl+"/variations", buf)
 	if err != nil {
