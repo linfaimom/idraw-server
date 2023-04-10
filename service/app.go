@@ -80,6 +80,7 @@ func GetCurrentUsages(user string) int {
 		return 0
 	} else if err != nil {
 		log.Println("failed to get current usage, return 0")
+		return 0
 	}
 	usages, _ := strconv.Atoi(val)
 	log.Printf("current user %s, current usages: %d\n", user, usages)

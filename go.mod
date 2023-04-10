@@ -2,7 +2,12 @@ module idraw-server
 
 go 1.20
 
-require github.com/gin-gonic/gin v1.9.0
+require (
+	github.com/gin-gonic/gin v1.9.0
+	github.com/redis/go-redis/v9 v9.0.3
+	github.com/robfig/cron/v3 v3.0.0
+	github.com/sunshineplan/imgconv v1.1.4
+)
 
 require (
 	github.com/bytedance/sonic v1.8.0 // indirect
@@ -27,10 +32,7 @@ require (
 	github.com/pdfcpu/pdfcpu v0.4.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/redis/go-redis/v9 v9.0.3 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/robfig/cron/v3 v3.0.0 // indirect
-	github.com/sunshineplan/imgconv v1.1.4 // indirect
 	github.com/sunshineplan/pdf v1.0.3 // indirect
 	github.com/sunshineplan/tiff v0.0.0-20220128141034-29b9d69bd906 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
