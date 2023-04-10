@@ -20,17 +20,18 @@ type weChatLoginResp struct {
 const weChatApiUrl = "https://api.weixin.qq.com"
 
 func init() {
-	log.Println("validating wechat service's env injections")
 	validateWechatServiceEnvInjections()
 }
 
 func validateWechatServiceEnvInjections() {
+	log.Println("validating wechat service's env injections")
 	if val := os.Getenv("WE_APP_ID"); val == "" {
 		log.Fatalln("lack env WE_APP_ID")
 	}
 	if val := os.Getenv("WE_APP_SECRET"); val == "" {
 		log.Fatalln("lack env WE_APP_SECRET")
 	}
+	log.Println("validation done")
 }
 
 func getWeAppId() string {

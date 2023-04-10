@@ -42,7 +42,6 @@ var ctx context.Context
 var redisCli *redis.Client
 
 func init() {
-	log.Println("validating app service's env injections")
 	validateAppServiceEnvInjections()
 	log.Println("create a redis client")
 	ctx = context.Background()
@@ -66,6 +65,7 @@ func init() {
 }
 
 func validateAppServiceEnvInjections() {
+	log.Println("validating app service's env injections")
 	if val := os.Getenv("OPENAI_API_KEY"); val == "" {
 		log.Fatalln("lack env OPENAI_API_KEY")
 	}
@@ -78,6 +78,7 @@ func validateAppServiceEnvInjections() {
 	if val := os.Getenv("REDIS_PASSWORD"); val == "" {
 		log.Fatalln("lack env REDIS_PASSWORD")
 	}
+	log.Println("validation done")
 }
 
 // 从 env 中获取，key 属于敏感信息，将会在运行中注入
