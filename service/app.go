@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/sunshineplan/imgconv"
 
 	"github.com/robfig/cron/v3"
@@ -35,17 +37,28 @@ const (
 	generatedPath string = "/idraw-generated-dir/"
 )
 
-var userUsagesMap = make(map[string]int)
+var ctx context.Context
+
+var redisCli *redis.Client
 
 func init() {
-	log.Println("fire a cron worker to clean the map")
+	log.Println("create a redis client")
+	ctx = context.Background()
+	redisCli = redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_ADDR"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       0, // use default DB
+	})
+	log.Println("fire a cron worker to reset the redis value")
 	c := cron.New()
 	c.AddFunc("@daily", func() {
-		log.Println("start to clean the map")
-		for k := range userUsagesMap {
-			delete(userUsagesMap, k)
+		log.Println("start to reset the redis value")
+		// reset the usages
+		iter := redisCli.Scan(ctx, 0, "*", 0).Iterator()
+		for iter.Next(ctx) {
+			redisCli.Set(ctx, iter.Val(), 0, 0)
 		}
-		log.Println("finished cleaning the map")
+		log.Println("finished reseting the redis value")
 	})
 	c.Start()
 }
@@ -62,7 +75,13 @@ func GetDailyLimits() int {
 }
 
 func GetCurrentUsages(user string) int {
-	usages := userUsagesMap[user]
+	val, err := redisCli.Get(ctx, user).Result()
+	if err == redis.Nil {
+		return 0
+	} else if err != nil {
+		log.Println("failed to get current usage, return 0")
+	}
+	usages, _ := strconv.Atoi(val)
 	log.Printf("current user %s, current usages: %d\n", user, usages)
 	return usages
 }
@@ -143,8 +162,11 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 		}
 		urls[i] = fileUrl
 	}
-	// count usages
-	userUsagesMap[req.User] = usages + 1
+	// accumulate usages
+	err = accumulateCurrentUsage(req.User)
+	if err != nil {
+		return []string{}, err
+	}
 	return urls, nil
 }
 
@@ -203,7 +225,11 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 		}
 		urls[i] = fileUrl
 	}
-	userUsagesMap[req.User] = usages + 1
+	// accumulate usages
+	err = accumulateCurrentUsage(req.User)
+	if err != nil {
+		return []string{}, err
+	}
 	return urls, nil
 }
 
@@ -235,4 +261,15 @@ func saveFile(user string, url string) (string, error) {
 	size, _ := io.Copy(out, resp.Body)
 	log.Printf("save file %s completed, the size is: %d bytes", fileName, size)
 	return fileName, nil
+}
+
+func accumulateCurrentUsage(user string) error {
+	val, err := redisCli.Get(ctx, user).Result()
+	if err == redis.Nil {
+		redisCli.Set(ctx, user, 1, 0)
+	} else if err == nil {
+		intVar, _ := strconv.Atoi(val)
+		redisCli.Set(ctx, user, intVar+1, 0)
+	}
+	return err
 }
