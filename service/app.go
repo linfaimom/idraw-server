@@ -94,7 +94,10 @@ func GetDailyLimits() int {
 func GetCurrentUsages(user string) int {
 	val, err := redisCli.Get(ctx, user).Result()
 	if err != nil {
-		log.Println("failed to get current usage, regard as 0")
+		if err == redis.Nil {
+			redisCli.Set(ctx, user, 0, 0)
+		}
+		log.Println("failed to get current usage, set value as 0")
 		val = "0"
 	}
 	usages, _ := strconv.Atoi(val)
