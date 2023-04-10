@@ -185,10 +185,7 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	}
 	// accumulate usages
 	err = accumulateCurrentUsage(req.User)
-	if err != nil {
-		return []string{}, err
-	}
-	return urls, nil
+	return urls, err
 }
 
 // GenerateImageVariationsByImage 根据图片产出相应变体图片
@@ -248,10 +245,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	}
 	// accumulate usages
 	err = accumulateCurrentUsage(req.User)
-	if err != nil {
-		return []string{}, err
-	}
-	return urls, nil
+	return urls, err
 }
 
 func saveFile(user string, url string) (string, error) {
