@@ -96,8 +96,9 @@ func GetCurrentUsages(user string) int {
 	if err != nil {
 		if err == redis.Nil {
 			redisCli.Set(ctx, user, 0, 0)
+		} else {
+			log.Println("failed to get current usage, set value as 0")
 		}
-		log.Println("failed to get current usage, set value as 0")
 		val = "0"
 	}
 	usages, _ := strconv.Atoi(val)
