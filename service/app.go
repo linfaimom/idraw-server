@@ -42,6 +42,8 @@ var ctx context.Context
 var redisCli *redis.Client
 
 func init() {
+	log.Println("validating app service's env injections")
+	validateAppServiceEnvInjections()
 	log.Println("create a redis client")
 	ctx = context.Background()
 	redisCli = redis.NewClient(&redis.Options{
@@ -61,6 +63,21 @@ func init() {
 		log.Println("finished reseting the redis value")
 	})
 	c.Start()
+}
+
+func validateAppServiceEnvInjections() {
+	if val := os.Getenv("OPENAI_API_KEY"); val == "" {
+		log.Fatalln("lack env OPENAI_API_KEY")
+	}
+	if val := os.Getenv("DAILY_LIMITS"); val == "" {
+		log.Fatalln("lack env DAILY_LIMITS")
+	}
+	if val := os.Getenv("REDIS_ADDR"); val == "" {
+		log.Fatalln("lack env REDIS_ADDR")
+	}
+	if val := os.Getenv("REDIS_PASSWORD"); val == "" {
+		log.Fatalln("lack env REDIS_PASSWORD")
+	}
 }
 
 // 从 env 中获取，key 属于敏感信息，将会在运行中注入
