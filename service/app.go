@@ -33,6 +33,7 @@ type generationData struct {
 
 const (
 	openAiApiUrl  string = "https://xray-jp.freedomlalaland.xyz:8443/v1/images"
+	dataDir       string = "/data" // mount this dir to the nas for persistence
 	uploadedPath  string = "/idraw-uploaded-dir/"
 	generatedPath string = "/idraw-generated-dir/"
 )
@@ -109,12 +110,11 @@ func GetCurrentUsages(user string) int {
 
 // ServeFile 提供文件下载功能
 func ServeFile(fileName string) (*os.File, error) {
-	homeDir, _ := os.UserHomeDir()
-	filePath := homeDir + generatedPath + fileName
+	filePath := dataDir + generatedPath + fileName
 	return os.Open(filePath)
 }
 
-// UploadFile 接收文件上传，并保存至临时目录
+// UploadFile 接收文件上传，并保存至数据目录（外挂 nas 持久化）
 func UploadFile(req request.FileUploadReq) (string, error) {
 	file := req.File
 	src, err := file.Open()
@@ -122,13 +122,12 @@ func UploadFile(req request.FileUploadReq) (string, error) {
 		return "", err
 	}
 	defer src.Close()
-	homeDir, _ := os.UserHomeDir()
 	// for security reasons, we just expose the relative path not the full path to the outside world
 	relativeDst := uploadedPath + req.User + "-" + file.Filename
-	if err = os.MkdirAll(filepath.Dir(homeDir+relativeDst), 0750); err != nil {
+	if err = os.MkdirAll(filepath.Dir(dataDir+relativeDst), 0750); err != nil {
 		return "", err
 	}
-	out, err := os.Create(homeDir + relativeDst)
+	out, err := os.Create(dataDir + relativeDst)
 	if err != nil {
 		return "", err
 	}
@@ -137,7 +136,7 @@ func UploadFile(req request.FileUploadReq) (string, error) {
 	if err != nil {
 		return "", nil
 	}
-	log.Println("saved file in ", homeDir+relativeDst)
+	log.Println("saved file in ", dataDir+relativeDst)
 	return relativeDst, nil
 }
 
@@ -194,8 +193,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	if usages >= GetDailyLimits() {
 		return nil, errors.New("current user has exceeded daily limits")
 	}
-	homeDir, _ := os.UserHomeDir()
-	fileDst := homeDir + req.FilePath
+	fileDst := dataDir + req.FilePath
 	file, err := imgconv.Open(fileDst)
 	if err != nil {
 		return nil, err
@@ -250,8 +248,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 
 func saveFile(user string, url string) (string, error) {
 	fileName := fmt.Sprintf("%s-%d.png", user, time.Now().UnixNano()/int64(time.Millisecond))
-	homeDir, _ := os.UserHomeDir()
-	fileAbsPath := homeDir + generatedPath + fileName
+	fileAbsPath := dataDir + generatedPath + fileName
 	if err := os.MkdirAll(filepath.Dir(fileAbsPath), 0750); err != nil {
 		return "", err
 	}
