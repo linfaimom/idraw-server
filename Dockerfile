@@ -8,5 +8,4 @@ FROM alpine as runner
 LABEL MAINTAINER="Marcus Lin" MAIL="linfaimom@gmail.com"
 WORKDIR /root/release
 COPY --from=builder  /root/buildDir/idraw-server /root/release/idraw-server
-RUN mkdir -pv /data/logs
 ENTRYPOINT ./idraw-server > application.log
