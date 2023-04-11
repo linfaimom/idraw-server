@@ -171,14 +171,17 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 		log.Println("do http request failed, err: ", err)
 		return nil, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		b, _ := io.ReadAll(resp.Body)
-		log.Printf("do http request failed, status: %s, body: %s\n", resp.Status, string(b))
 		result := &errorResp{}
-		json.NewDecoder(resp.Body).Decode(result)
+		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+			b, _ := io.ReadAll(resp.Body)
+			log.Printf("do decode body failed, just print string, status: %s, body: %s\n", resp.Status, string(b))
+			return nil, errors.New(resp.Status)
+		}
+		log.Printf("error response, status is: %s, msg is: %s\n", resp.Status, result.Error.Message)
 		return nil, errors.New(result.Error.Message)
 	}
-	defer resp.Body.Close()
 	result := &generationResp{}
 	json.NewDecoder(resp.Body).Decode(result)
 	urls := make([]string, len(result.Data))
@@ -228,14 +231,17 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 		log.Println("do http request failed, err: ", err)
 		return nil, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		b, _ := io.ReadAll(resp.Body)
-		log.Printf("do http request failed, status: %s, body: %s\n", resp.Status, string(b))
 		result := &errorResp{}
-		json.NewDecoder(resp.Body).Decode(result)
+		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+			b, _ := io.ReadAll(resp.Body)
+			log.Printf("do decode body failed, just print string, status: %s, body: %s\n", resp.Status, string(b))
+			return nil, errors.New(resp.Status)
+		}
+		log.Printf("error response, status is: %s, msg is: %s\n", resp.Status, result.Error.Message)
 		return nil, errors.New(result.Error.Message)
 	}
-	defer resp.Body.Close()
 	result := &generationResp{}
 	json.NewDecoder(resp.Body).Decode(result)
 	urls := make([]string, len(result.Data))
