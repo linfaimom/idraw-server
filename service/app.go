@@ -22,8 +22,6 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type any interface{}
-
 type generationResp struct {
 	Created int64            `json:"created"`
 	Data    []generationData `json:"data"`
