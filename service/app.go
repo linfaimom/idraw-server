@@ -22,6 +22,8 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+type any interface{}
+
 type generationResp struct {
 	Created int64            `json:"created"`
 	Data    []generationData `json:"data"`
@@ -29,6 +31,17 @@ type generationResp struct {
 
 type generationData struct {
 	Url string `json:"url"`
+}
+
+type errorResp struct {
+	Error errorData `json:"error"`
+}
+
+type errorData struct {
+	Code    any    `json:"code"`
+	Message string `json:"message"`
+	Param   any    `json:"param"`
+	Type    string `json:"type"`
 }
 
 const (
@@ -163,15 +176,13 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	if resp.StatusCode != 200 {
 		b, _ := io.ReadAll(resp.Body)
 		log.Printf("do http request failed, status: %s, body: %s\n", resp.Status, string(b))
-		return nil, errors.New(resp.Status)
+		result := &errorResp{}
+		json.NewDecoder(resp.Body).Decode(result)
+		return nil, errors.New(result.Error.Message)
 	}
 	defer resp.Body.Close()
 	result := &generationResp{}
-	err = json.NewDecoder(resp.Body).Decode(result)
-	if err != nil {
-		log.Println("do response json decode failed", err)
-		return nil, err
-	}
+	json.NewDecoder(resp.Body).Decode(result)
 	urls := make([]string, len(result.Data))
 	for i, data := range result.Data {
 		// download from the url and save as a file
@@ -222,15 +233,13 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	if resp.StatusCode != 200 {
 		b, _ := io.ReadAll(resp.Body)
 		log.Printf("do http request failed, status: %s, body: %s\n", resp.Status, string(b))
-		return nil, errors.New(resp.Status)
+		result := &errorResp{}
+		json.NewDecoder(resp.Body).Decode(result)
+		return nil, errors.New(result.Error.Message)
 	}
 	defer resp.Body.Close()
 	result := &generationResp{}
-	err = json.NewDecoder(resp.Body).Decode(result)
-	if err != nil {
-		log.Println("do response json decode failed", err)
-		return nil, err
-	}
+	json.NewDecoder(resp.Body).Decode(result)
 	urls := make([]string, len(result.Data))
 	for i, data := range result.Data {
 		// download from the url and save as a file
