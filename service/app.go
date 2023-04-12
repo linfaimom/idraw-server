@@ -47,6 +47,8 @@ const (
 	dataDir       string = "/data" // mount this dir to the nas for persistence
 	uploadedPath  string = "/idraw-uploaded-dir/"
 	generatedPath string = "/idraw-generated-dir/"
+	typePrompt    string = "PROMPT"
+	typeVariation string = "VARIATION"
 )
 
 var ctx context.Context
@@ -187,7 +189,7 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	urls := make([]string, len(result.Data))
 	for i, data := range result.Data {
 		// download from the url and save as a file
-		fileUrl, err := saveFile(req.User, data.Url)
+		fileUrl, err := saveFile(typePrompt, req.User, data.Url)
 		if err != nil {
 			log.Println("save file error")
 			return []string{}, err
@@ -247,7 +249,7 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	urls := make([]string, len(result.Data))
 	for i, data := range result.Data {
 		// download from the url and save as a file
-		fileUrl, err := saveFile(req.User, data.Url)
+		fileUrl, err := saveFile(typeVariation, req.User, data.Url)
 		if err != nil {
 			log.Println("save file error")
 			return []string{}, err
@@ -259,8 +261,8 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 	return urls, err
 }
 
-func saveFile(user string, url string) (string, error) {
-	fileName := fmt.Sprintf("%s-%d.png", user, time.Now().UnixNano()/int64(time.Millisecond))
+func saveFile(calledType string, user string, url string) (string, error) {
+	fileName := fmt.Sprintf("%s-%s-%d.png", user, calledType, time.Now().UnixNano()/int64(time.Millisecond))
 	fileAbsPath := dataDir + generatedPath + fileName
 	if err := os.MkdirAll(filepath.Dir(fileAbsPath), 0750); err != nil {
 		return "", err
