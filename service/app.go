@@ -89,9 +89,6 @@ func validateAppServiceEnvInjections() {
 	if val := os.Getenv("REDIS_ADDR"); val == "" {
 		log.Fatalln("lack env REDIS_ADDR")
 	}
-	if val := os.Getenv("REDIS_PASSWORD"); val == "" {
-		log.Fatalln("lack env REDIS_PASSWORD")
-	}
 	log.Println("validation done")
 }
 

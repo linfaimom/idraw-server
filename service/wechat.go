@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"idraw-server/db"
 	"log"
 	"net/http"
 	"net/url"
@@ -19,8 +20,11 @@ type weChatLoginResp struct {
 
 const weChatApiUrl = "https://api.weixin.qq.com"
 
+var userMapper db.UserMapper
+
 func init() {
 	validateWechatServiceEnvInjections()
+	userMapper = db.NewUserMapper()
 }
 
 func validateWechatServiceEnvInjections() {
@@ -65,5 +69,7 @@ func WeChatLogin(code string) (*weChatLoginResp, error) {
 		log.Println("do response json decode failed", err)
 		return result, err
 	}
+	// try to record user info
+	userMapper.Insert(result.OpenId)
 	return result, nil
 }
