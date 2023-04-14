@@ -123,8 +123,8 @@ func GetCurrentUsages(user string) int {
 }
 
 // ServeFile 提供文件下载功能
-func ServeFile(fileName string) (*os.File, error) {
-	filePath := dataDir + generatedPath + fileName
+func ServeFile(relativePath string) (*os.File, error) {
+	filePath := dataDir + relativePath
 	return os.Open(filePath)
 }
 
@@ -270,11 +270,11 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 
 func saveFile(calledType string, user string, url string) (string, error) {
 	fileName := fmt.Sprintf("%s-%s-%d.png", user, calledType, time.Now().UnixNano()/int64(time.Millisecond))
-	fileAbsPath := dataDir + generatedPath + fileName
-	if err := os.MkdirAll(filepath.Dir(fileAbsPath), 0750); err != nil {
+	relativeDst := generatedPath + fileName
+	if err := os.MkdirAll(filepath.Dir(dataDir+relativeDst), 0750); err != nil {
 		return "", err
 	}
-	out, err := os.Create(fileAbsPath)
+	out, err := os.Create(dataDir + relativeDst)
 	if err != nil {
 		return "", err
 	}
@@ -294,7 +294,7 @@ func saveFile(calledType string, user string, url string) (string, error) {
 	// copy to the file
 	size, _ := io.Copy(out, resp.Body)
 	log.Printf("save file %s completed, the size is: %d bytes", fileName, size)
-	return fileName, nil
+	return relativeDst, nil
 }
 
 func accumulateCurrentUsage(user string) {
