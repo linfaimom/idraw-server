@@ -25,23 +25,38 @@ func GetCurrentUsages(c *gin.Context) {
 	}
 }
 
+func FetchRecords(c *gin.Context) {
+	openId := c.Query("openId")
+	calledType := c.Query("calledType")
+	if openId == "" || calledType == "" {
+		response.Fail(c, http.StatusBadRequest, errors.New("error params"))
+		return
+	}
+	records, err := service.FetchRecords(openId, calledType)
+	if err != nil {
+		response.Fail(c, http.StatusServiceUnavailable, err)
+		return
+	}
+	response.Success(c, records)
+}
+
 func ServeFile(c *gin.Context) {
 	if fileName := c.Query("fileName"); fileName != "" {
 		file, err := service.ServeFile(fileName)
 		if err != nil {
-			response.Fail(c, http.StatusServiceUnavailable, errors.New("failed to fetch current file"))
+			response.Fail(c, http.StatusServiceUnavailable, err)
 			return
 		}
 		defer file.Close()
 		c.Writer.Header().Add("Content-Type", "image/png")
 		_, err = io.Copy(c.Writer, file)
 		if err != nil {
-			response.Fail(c, http.StatusServiceUnavailable, errors.New("failed to fetch current file"))
+			response.Fail(c, http.StatusServiceUnavailable, err)
 			return
 		}
 		response.Success(c, nil)
 	} else {
-		response.Fail(c, http.StatusServiceUnavailable, errors.New("error params"))
+		response.Fail(c, http.StatusBadRequest, errors.New("error params"))
 		return
 	}
 }

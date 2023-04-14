@@ -32,3 +32,14 @@ func (mapper *RecordMapper) Insert(openId string, calledType string, input strin
 	}
 	return record.ID, nil
 }
+
+func (mapper *RecordMapper) FetchByUserAndType(openId string, calledType string) ([]Record, error) {
+	user := User{}
+	if result := dbInstance.Where("open_id = ?", openId).First(&user); result.RowsAffected == 0 {
+		log.Printf("failed to find the user, the error is %s", result.Error)
+		return []Record{}, result.Error
+	}
+	records := []Record{}
+	result := dbInstance.Where("uid = ? and type = ?", user.ID, calledType).Order("modified_time desc").Find(&records)
+	return records, result.Error
+}
