@@ -19,7 +19,7 @@ type User struct {
 type Record struct {
 	Model
 	Uid    uint
-	Type   uint
+	Type   string
 	Input  string
 	Output string
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"idraw-server/api/request"
+	"idraw-server/db"
 	"io"
 	"log"
 	"mime/multipart"
@@ -51,12 +52,15 @@ const (
 	typeVariation string = "VARIATION"
 )
 
-var ctx context.Context
-
-var redisCli *redis.Client
+var (
+	ctx          context.Context
+	redisCli     *redis.Client
+	recordMapper db.RecordMapper
+)
 
 func init() {
 	validateAppServiceEnvInjections()
+	recordMapper = db.NewRecordMapper()
 	log.Println("create a redis client")
 	ctx = context.Background()
 	redisCli = redis.NewClient(&redis.Options{
@@ -193,9 +197,12 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 		}
 		urls[i] = fileUrl
 	}
+	// save record to db
+	jsonStr, _ := json.Marshal(urls)
+	recordMapper.Insert(req.User, typePrompt, req.Prompt, string(jsonStr))
 	// accumulate usages
-	err = accumulateCurrentUsage(req.User)
-	return urls, err
+	accumulateCurrentUsage(req.User)
+	return urls, nil
 }
 
 // GenerateImageVariationsByImage 根据图片产出相应变体图片
@@ -253,9 +260,12 @@ func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, er
 		}
 		urls[i] = fileUrl
 	}
+	// save record to db
+	jsonStr, _ := json.Marshal(urls)
+	recordMapper.Insert(req.User, typeVariation, req.FilePath, string(jsonStr))
 	// accumulate usages
-	err = accumulateCurrentUsage(req.User)
-	return urls, err
+	accumulateCurrentUsage(req.User)
+	return urls, nil
 }
 
 func saveFile(calledType string, user string, url string) (string, error) {
@@ -287,13 +297,14 @@ func saveFile(calledType string, user string, url string) (string, error) {
 	return fileName, nil
 }
 
-func accumulateCurrentUsage(user string) error {
+func accumulateCurrentUsage(user string) {
 	val, err := redisCli.Get(ctx, user).Result()
 	if err == redis.Nil {
 		redisCli.Set(ctx, user, 1, 0)
 	} else if err == nil {
 		intVar, _ := strconv.Atoi(val)
 		redisCli.Set(ctx, user, intVar+1, 0)
+	} else {
+		log.Printf("just ignore this accumulation, the error is %s", err)
 	}
-	return err
 }
