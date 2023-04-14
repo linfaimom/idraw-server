@@ -9,6 +9,6 @@ RUN go build -v
 FROM alpine as runner
 LABEL MAINTAINER="Marcus Lin" MAIL="linfaimom@gmail.com"
 WORKDIR /root/release
-RUN --mount=type=cache,target=/root/.cache/apk-cache apk update && apk upgrade && apk add sqlite
+RUN --mount=type=cache,target=/root/.cache/apk-cache apk update && apk upgrade && apk add sqlite redis
 COPY --from=builder  /root/buildDir/idraw-server /root/release/idraw-server
 ENTRYPOINT ./idraw-server > application.log
