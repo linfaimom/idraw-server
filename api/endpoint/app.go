@@ -25,6 +25,20 @@ func GetCurrentUsages(c *gin.Context) {
 	}
 }
 
+func FetchRecordsCount(c *gin.Context) {
+	openId := c.Query("openId")
+	if openId == "" {
+		response.Fail(c, http.StatusBadRequest, errors.New("error params"))
+		return
+	}
+	count, err := service.FetchRecordsCount(openId)
+	if err != nil {
+		response.Fail(c, http.StatusServiceUnavailable, err)
+		return
+	}
+	response.Success(c, count)
+}
+
 func FetchRecords(c *gin.Context) {
 	openId := c.Query("openId")
 	calledType := c.Query("calledType")

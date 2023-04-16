@@ -155,17 +155,22 @@ func UploadFile(req request.FileUploadReq) (string, error) {
 	return relativeDst, nil
 }
 
+func FetchRecordsCount(openId string) (int, error) {
+	count, err := recordMapper.FetchCountByUser(openId)
+	if err != nil && err.Error() != "record not found" {
+		log.Printf("fetch user %s's records count failed, the error is %s\n", openId, err)
+		return 0, err
+	}
+	return count, nil
+}
+
 func FetchRecords(openId string, calledType string) ([]response.RecordDto, error) {
 	if calledType != typePrompt && calledType != typeVariation {
 		return []response.RecordDto{}, errors.New("not a valid called type")
 	}
 	records, err := recordMapper.FetchByUserAndType(openId, calledType)
-	if err != nil {
+	if err != nil && err.Error() != "record not found" {
 		log.Printf("fetch user %s's records failed, the error is %s\n", openId, err)
-		// just ignore the case that not records have found
-		if err.Error() == "record not found" {
-			return []response.RecordDto{}, nil
-		}
 		return []response.RecordDto{}, err
 	}
 	result := make([]response.RecordDto, len(records))

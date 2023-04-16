@@ -52,6 +52,8 @@ func main() {
 		app.GET("", endpoint.ServeFile)
 		// 生成记录查询
 		app.GET("/records", endpoint.FetchRecords)
+		// 生成纪录总数查询
+		app.GET("/records/count", endpoint.FetchRecordsCount)
 		// 文件上传
 		app.POST("", endpoint.UploadFile)
 		// 根据场景描述产出符合场景的图片

@@ -33,6 +33,17 @@ func (mapper *RecordMapper) Insert(openId string, calledType string, input strin
 	return record.ID, nil
 }
 
+func (mapper *RecordMapper) FetchCountByUser(openId string) (int, error) {
+	user := User{}
+	if result := dbInstance.Where("open_id = ?", openId).First(&user); result.RowsAffected == 0 {
+		log.Printf("failed to find the user, the error is %s", result.Error)
+		return 0, result.Error
+	}
+	records := []Record{}
+	result := dbInstance.Where("uid = ?", user.ID).Find(&records)
+	return len(records), result.Error
+}
+
 func (mapper *RecordMapper) FetchByUserAndType(openId string, calledType string) ([]Record, error) {
 	user := User{}
 	if result := dbInstance.Where("open_id = ?", openId).First(&user); result.RowsAffected == 0 {
