@@ -12,7 +12,8 @@ import (
 )
 
 func GetDailyLimits(c *gin.Context) {
-	response.Success(c, service.GetDailyLimits())
+	openId := c.Query("openId")
+	response.Success(c, service.GetDailyLimits(openId))
 }
 
 func GetCurrentUsages(c *gin.Context) {

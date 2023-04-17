@@ -45,12 +45,14 @@ type errorData struct {
 }
 
 const (
-	openAiApiUrl  string = "https://xray-jp.freedomlalaland.xyz:8443/v1/images"
-	dataDir       string = "/data" // mount this dir to the nas for persistence
-	uploadedPath  string = "/idraw-uploaded-dir/"
-	generatedPath string = "/idraw-generated-dir/"
-	typePrompt    string = "PROMPT"
-	typeVariation string = "VARIATION"
+	openAiApiUrl       string = "https://xray-jp.freedomlalaland.xyz:8443/v1/images"
+	dataDir            string = "/data" // mount this dir to the nas for persistence
+	uploadedPath       string = "/idraw-uploaded-dir/"
+	generatedPath      string = "/idraw-generated-dir/"
+	typePrompt         string = "PROMPT"
+	typeVariation      string = "VARIATION"
+	prefixDailyLimits  string = "limits-"
+	prefixCurrentUsage string = "usage-"
 )
 
 var (
@@ -74,9 +76,14 @@ func init() {
 	c.AddFunc("@daily", func() {
 		log.Println("start to reset the redis value")
 		// reset the usages
-		iter := redisCli.Scan(ctx, 0, "*", 0).Iterator()
-		for iter.Next(ctx) {
-			redisCli.Set(ctx, iter.Val(), 0, 0)
+		usageIter := redisCli.Scan(ctx, 0, prefixCurrentUsage+"*", 0).Iterator()
+		for usageIter.Next(ctx) {
+			redisCli.Set(ctx, usageIter.Val(), 0, 0)
+		}
+		// reset the limits
+		limitsIter := redisCli.Scan(ctx, 0, prefixDailyLimits+"*", 0).Iterator()
+		for limitsIter.Next(ctx) {
+			redisCli.Set(ctx, limitsIter.Val(), os.Getenv("DAILY_LIMITS"), 0)
 		}
 		log.Println("finished reseting the redis value")
 	})
@@ -102,24 +109,36 @@ func getOpenAiApiKey() string {
 	return os.Getenv("OPENAI_API_KEY")
 }
 
-func GetDailyLimits() int {
-	stringValue := os.Getenv("DAILY_LIMITS")
-	dailyLimits, _ := strconv.Atoi(stringValue)
-	return dailyLimits
+func GetDailyLimits(user string) int {
+	defaultVal := os.Getenv("DAILY_LIMITS")
+	if user == "" {
+		result, _ := strconv.Atoi(defaultVal)
+		return result
+	}
+	val, err := redisCli.Get(ctx, prefixDailyLimits+user).Result()
+	if err != nil {
+		if err == redis.Nil {
+			redisCli.Set(ctx, prefixDailyLimits+user, defaultVal, 0)
+		} else {
+			log.Println("failed to get daily limits, set value as default")
+		}
+		val = defaultVal
+	}
+	limits, _ := strconv.Atoi(val)
+	return limits
 }
 
 func GetCurrentUsages(user string) int {
-	val, err := redisCli.Get(ctx, user).Result()
+	val, err := redisCli.Get(ctx, prefixCurrentUsage+user).Result()
 	if err != nil {
 		if err == redis.Nil {
-			redisCli.Set(ctx, user, 0, 0)
+			redisCli.Set(ctx, prefixCurrentUsage+user, 0, 0)
 		} else {
 			log.Println("failed to get current usage, set value as 0")
 		}
 		val = "0"
 	}
 	usages, _ := strconv.Atoi(val)
-	log.Printf("current user %s, current usages: %d\n", user, usages)
 	return usages
 }
 
@@ -191,7 +210,8 @@ func FetchRecords(openId string, calledType string) ([]response.RecordDto, error
 // GenerateImagesByPrompt 根据场景描述产出符合场景的图片
 func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 	usages := GetCurrentUsages(req.User)
-	if usages >= GetDailyLimits() {
+	log.Printf("do prompt request, current user %s, current usages: %d\n", req.User, usages)
+	if usages >= GetDailyLimits(req.User) {
 		return nil, errors.New("current user has exceeded daily limits")
 	}
 	body, _ := json.Marshal(req)
@@ -242,7 +262,8 @@ func GenerateImagesByPrompt(req request.ImageGenerationReq) ([]string, error) {
 // GenerateImageVariationsByImage 根据图片产出相应变体图片
 func GenerateImageVariationsByImage(req request.ImageVariationReq) ([]string, error) {
 	usages := GetCurrentUsages(req.User)
-	if usages >= GetDailyLimits() {
+	log.Printf("do variation request, current user %s, current usages: %d\n", req.User, usages)
+	if usages >= GetDailyLimits(req.User) {
 		return nil, errors.New("current user has exceeded daily limits")
 	}
 	fileDst := dataDir + req.FilePath
@@ -332,12 +353,12 @@ func saveFile(calledType string, user string, url string) (string, error) {
 }
 
 func accumulateCurrentUsage(user string) {
-	val, err := redisCli.Get(ctx, user).Result()
+	val, err := redisCli.Get(ctx, prefixCurrentUsage+user).Result()
 	if err == redis.Nil {
-		redisCli.Set(ctx, user, 1, 0)
+		redisCli.Set(ctx, prefixCurrentUsage+user, 1, 0)
 	} else if err == nil {
 		intVar, _ := strconv.Atoi(val)
-		redisCli.Set(ctx, user, intVar+1, 0)
+		redisCli.Set(ctx, prefixCurrentUsage+user, intVar+1, 0)
 	} else {
 		log.Printf("just ignore this accumulation, the error is %s", err)
 	}
