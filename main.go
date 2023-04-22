@@ -44,8 +44,10 @@ func main() {
 	// biz service endpoints
 	app := r.Group("/api/images")
 	{
-		// 每日限额
+		// 获取每日限额
 		app.GET("/dailyLimits", endpoint.GetDailyLimits)
+		// 增加每日限额
+		app.POST("/dailyLimits", endpoint.IncreaseDailyLimits)
 		// 当前使用值
 		app.GET("/currentUsages", endpoint.GetCurrentUsages)
 		// 文件下载

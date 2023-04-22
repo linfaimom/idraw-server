@@ -128,6 +128,12 @@ func GetDailyLimits(user string) int {
 	return limits
 }
 
+func IncreaseDailyLimits(user string, num int) {
+	val, _ := redisCli.Get(ctx, prefixDailyLimits+user).Result()
+	result, _ := strconv.Atoi(val)
+	redisCli.Set(ctx, prefixDailyLimits+user, result+num, 0)
+}
+
 func GetCurrentUsages(user string) int {
 	val, err := redisCli.Get(ctx, prefixCurrentUsage+user).Result()
 	if err != nil {

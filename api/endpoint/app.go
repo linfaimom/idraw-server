@@ -7,6 +7,7 @@ import (
 	"idraw-server/service"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,18 @@ import (
 func GetDailyLimits(c *gin.Context) {
 	openId := c.Query("openId")
 	response.Success(c, service.GetDailyLimits(openId))
+}
+
+func IncreaseDailyLimits(c *gin.Context) {
+	openId := c.Query("openId")
+	number := c.Query("number")
+	if openId == "" || number == "" {
+		response.Fail(c, http.StatusBadRequest, errors.New("error params"))
+		return
+	}
+	num, _ := strconv.Atoi(number)
+	service.IncreaseDailyLimits(openId, num)
+	response.Success(c, nil)
 }
 
 func GetCurrentUsages(c *gin.Context) {
