@@ -45,7 +45,7 @@ type errorData struct {
 }
 
 const (
-	openAiApiUrl       string = "https://xray-jp.freedomlalaland.xyz:8443/v1/images"
+	openAiApiUrl       string = "https://openai.freedom-island.xyz/v1/images"
 	dataDir            string = "/data" // mount this dir to the nas for persistence
 	uploadedPath       string = "/idraw-uploaded-dir/"
 	generatedPath      string = "/idraw-generated-dir/"
